@@ -34,8 +34,17 @@
                         <input type="text" id="name" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white/80" placeholder="e.g., Mukesh">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Department & Year</label>
-                        <input type="text" id="dept" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white/80" placeholder="e.g., CSE - 3rd Year">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Department</label>
+                        <select id="dept" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white/80">
+                            <option value="">Select Department</option>
+                            <option value="CSE">CSE</option>
+                            <option value="IT">IT</option>
+                            <option value="ECE">ECE</option>
+                            <option value="EEE">EEE</option>
+                            <option value="Mechanical">Mechanical</option>
+                            <option value="Civil">Civil</option>
+                            <option value="AI & DS">AI & DS</option>
+                        </select>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Your Skills</label>
@@ -61,9 +70,20 @@
                 </form>
             </div>
 
-            <!-- Search & Filter Section -->
-            <div class="mb-6">
-                <input type="text" id="searchInput" placeholder="🔍 Search by name, skill, or department..." class="w-full px-4 py-3 border rounded-xl shadow-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white/90 backdrop-blur-md">
+            <!-- Search Bar -->
+            <div class="mb-4">
+                <input type="text" id="searchInput" placeholder="🔍 Search by name, skill..." class="w-full px-4 py-3 border rounded-xl shadow-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white/90 backdrop-blur-md">
+            </div>
+
+            <!-- Department Filter Buttons -->
+            <div class="flex flex-wrap gap-2 mb-6 justify-center">
+                <button onclick="filterDept('All')" class="dept-btn px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-full shadow hover:bg-indigo-700 transition">All</button>
+                <button onclick="filterDept('CSE')" class="dept-btn px-4 py-2 bg-white/80 text-gray-800 text-sm font-semibold rounded-full shadow hover:bg-white transition">CSE</button>
+                <button onclick="filterDept('IT')" class="dept-btn px-4 py-2 bg-white/80 text-gray-800 text-sm font-semibold rounded-full shadow hover:bg-white transition">IT</button>
+                <button onclick="filterDept('ECE')" class="dept-btn px-4 py-2 bg-white/80 text-gray-800 text-sm font-semibold rounded-full shadow hover:bg-white transition">ECE</button>
+                <button onclick="filterDept('EEE')" class="dept-btn px-4 py-2 bg-white/80 text-gray-800 text-sm font-semibold rounded-full shadow hover:bg-white transition">EEE</button>
+                <button onclick="filterDept('Mechanical')" class="dept-btn px-4 py-2 bg-white/80 text-gray-800 text-sm font-semibold rounded-full shadow hover:bg-white transition">Mechanical</button>
+                <button onclick="filterDept('AI & DS')" class="dept-btn px-4 py-2 bg-white/80 text-gray-800 text-sm font-semibold rounded-full shadow hover:bg-white transition">AI & DS</button>
             </div>
 
             <!-- Partner Cards Grid -->
@@ -94,6 +114,7 @@
         const db = getFirestore(app);
 
         let partners = [];
+        let selectedDept = 'All';
         const form = document.getElementById('partnerForm');
         const cardsContainer = document.getElementById('cardsContainer');
         const searchInput = document.getElementById('searchInput');
@@ -104,20 +125,33 @@
             snapshot.forEach((docSnap) => {
                 partners.push({ id: docSnap.id, ...docSnap.data() });
             });
-            renderCards(searchInput.value);
+            renderCards(searchInput.value, selectedDept);
         });
 
-        function renderCards(filterText = '') {
+        window.filterDept = function(dept) {
+            selectedDept = dept;
+            document.querySelectorAll('.dept-btn').forEach(btn => {
+                if(btn.innerText === dept) {
+                    btn.className = "dept-btn px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-full shadow transition";
+                } else {
+                    btn.className = "dept-btn px-4 py-2 bg-white/80 text-gray-800 text-sm font-semibold rounded-full shadow hover:bg-white transition";
+                }
+            });
+            renderCards(searchInput.value, selectedDept);
+        }
+
+        function renderCards(filterText = '', deptFilter = 'All') {
             cardsContainer.innerHTML = '';
             
-            const filtered = partners.filter(p => 
-                (p.name && p.name.toLowerCase().includes(filterText.toLowerCase())) ||
-                (p.skills && p.skills.toLowerCase().includes(filterText.toLowerCase())) ||
-                (p.dept && p.dept.toLowerCase().includes(filterText.toLowerCase()))
-            );
+            const filtered = partners.filter(p => {
+                const matchesSearch = (p.name && p.name.toLowerCase().includes(filterText.toLowerCase())) ||
+                                      (p.skills && p.skills.toLowerCase().includes(filterText.toLowerCase()));
+                const matchesDept = (deptFilter === 'All' || p.dept === deptFilter);
+                return matchesSearch && matchesDept;
+            });
 
             if(filtered.length === 0) {
-                cardsContainer.innerHTML = `<p class="text-white md:col-span-2 text-center py-4 bg-black/40 rounded-xl backdrop-blur-sm">No results found...</p>`;
+                cardsContainer.innerHTML = `<p class="text-white md:col-span-2 text-center py-4 bg-black/40 rounded-xl backdrop-blur-sm">No profiles found...</p>`;
                 return;
             }
 
@@ -127,18 +161,18 @@
                 card.innerHTML = `
                     <div>
                         <div class="flex justify-between items-start mb-2">
-                            <h3 class="font-bold text-lg text-gray-800">${p.name || 'No Name'}</h3>
+                            <h3 class="font-bold text-lg text-gray-800">${escapeHtml(p.name || 'No Name')}</h3>
                             <div class="flex items-center gap-2">
-                                <span class="text-xs bg-indigo-50 text-indigo-600 px-2.5 py-1 rounded-full font-medium">${p.dept || ''}</span>
+                                <span class="text-xs bg-indigo-100 text-indigo-700 px-2.5 py-1 rounded-full font-bold">${escapeHtml(p.dept || '')}</span>
                                 <button onclick="window.editCard('${p.id}')" class="text-blue-600 text-xs font-semibold border border-blue-300 px-2 py-1 rounded hover:bg-blue-50">Edit</button>
                                 <button onclick="window.deleteCard('${p.id}')" class="text-red-600 text-xs font-semibold border border-red-300 px-2 py-1 rounded hover:bg-red-50">Delete</button>
                             </div>
                         </div>
-                        <p class="text-sm text-gray-600 mb-2"><strong>Skills:</strong> ${p.skills || ''}</p>
-                        <p class="text-sm text-gray-700 bg-gray-50/80 p-2.5 rounded-lg border border-gray-100 mb-2"><strong>Looking For:</strong> ${p.lookingFor || ''}</p>
-                        <p class="text-sm text-emerald-600 font-medium mb-4">📞 Contact: ${p.contact || ''}</p>
+                        <p class="text-sm text-gray-600 mb-2"><strong>Skills:</strong> ${escapeHtml(p.skills || '')}</p>
+                        <p class="text-sm text-gray-700 bg-gray-50/80 p-2.5 rounded-lg border border-gray-100 mb-2"><strong>Looking For:</strong> ${escapeHtml(p.lookingFor || '')}</p>
+                        <p class="text-sm text-emerald-600 font-medium mb-4">📞 Contact: ${escapeHtml(p.contact || '')}</p>
                     </div>
-                    <a href="tel:${p.contact}" class="block text-center bg-indigo-600 text-white text-sm font-semibold py-2 rounded-lg hover:bg-indigo-700 transition shadow-sm">
+                    <a href="tel:${escapeHtml(p.contact)}" class="block text-center bg-indigo-600 text-white text-sm font-semibold py-2 rounded-lg hover:bg-indigo-700 transition shadow-sm">
                         Call / Connect
                     </a>
                 `;
@@ -146,16 +180,36 @@
             });
         }
 
+        // XSS Attack-ல் இருந்து பாதுகாக்க ஒரு சின்ன ஃபங்க்ஷன்
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+        }
+
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             const editId = document.getElementById('editId').value;
+            const pinVal = document.getElementById('pin').value;
+
+            // PIN பாதுகாப்பு சரிபார்ப்பு (4 இலக்க எண் உள்ளதா எனச் சோதிக்க)
+            if(pinVal.length !== 4 || isNaN(pinVal)) {
+                alert("Please enter a valid 4-digit PIN!");
+                return;
+            }
+
             const newData = {
-                name: document.getElementById('name').value,
+                name: document.getElementById('name').value.trim(),
                 dept: document.getElementById('dept').value,
-                skills: document.getElementById('skills').value,
-                lookingFor: document.getElementById('lookingFor').value,
-                contact: document.getElementById('contact').value,
-                pin: document.getElementById('pin').value
+                skills: document.getElementById('skills').value.trim(),
+                lookingFor: document.getElementById('lookingFor').value.trim(),
+                contact: document.getElementById('contact').value.trim(),
+                pin: pinVal
             };
 
             try {
@@ -176,7 +230,7 @@
             const p = partners.find(item => item.id === id);
             if (!p) return;
             const enteredPin = prompt("Enter the 4-digit PIN to edit this post:");
-            const MASTER_PIN = "9999";
+            const MASTER_PIN = "9999"; // தேவைப்பட்டால் இதை மாற்றிக் கொள்ளலாம்
 
             if (enteredPin === p.pin || enteredPin === MASTER_PIN) {
                 document.getElementById('name').value = p.name;
@@ -222,7 +276,7 @@
         }
 
         searchInput.addEventListener('input', (e) => {
-            renderCards(e.target.value);
+            renderCards(e.target.value, selectedDept);
         });
     </script>
 </body>
