@@ -9,7 +9,7 @@
 </head>
 <body class="bg-cover bg-center bg-fixed min-h-screen relative" style="background-image: url('college.jpg');">
 
-    <!-- Background Transparent Overlay (கல்லூரி போட்டோ லைட்டாகத் தெரிய ஒரு லேயர்) -->
+    <!-- Background Transparent Overlay -->
     <div class="absolute inset-0 bg-black/50 min-h-screen z-0"></div>
 
     <!-- Main Content Wrapper -->
@@ -24,7 +24,7 @@
 
         <main class="container mx-auto px-4 py-8 max-w-4xl">
             
-            <!-- Registration Form Section (Transparent Glass Effect) -->
+            <!-- Registration Form Section -->
             <div class="bg-white/90 backdrop-blur-md rounded-xl shadow-xl p-6 mb-8 border border-white/20">
                 <h2 id="formTitle" class="text-xl font-semibold text-gray-800 mb-4">✨ Post Your Profile</h2>
                 <form id="partnerForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -188,7 +188,7 @@
                 document.getElementById('editId').value = p.id;
                 document.getElementById('formTitle').innerText = "✨ Edit Your Profile";
                 document.getElementById('submitBtn').innerText = "Update Profile";
-                window.scrollTo({ top: 0, behavior: 'smooth' };
+                window.scrollTo({ top: 0, behavior: 'smooth' });
             } else if (enteredPin !== null) {
                 alert("Incorrect PIN!");
             }
